@@ -113,7 +113,14 @@ class Feed extends Component {
     }
 
     fetch(url, {
-      method: 'POST'
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: postData.title,
+        content: postData.content
+      })
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -122,6 +129,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
+        console.log(resData);
         const post = {
           _id: resData.post._id,
           title: resData.post.title,
