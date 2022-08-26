@@ -137,7 +137,7 @@ class Feed extends Component {
   startEditPostHandler = postId => {
     this.setState(prevState => {
       const loadedPost = { ...prevState.posts.find(p => p._id === postId) };
-
+      console.log(loadedPost.imagePath);
       return {
         isEditing: true,
         editPost: loadedPost
@@ -157,6 +157,7 @@ class Feed extends Component {
     formData.append('image', postData.image);
     if (this.state.editPost) {
       formData.append('oldPath', this.state.editPost.imagePath);
+      console.log(this.state.editPost.imagePath);
     }
     fetch('http://localhost:8080/post-image', {
       method: 'PUT',
@@ -187,6 +188,27 @@ class Feed extends Component {
         `
         };
 
+        if (this.state.editPost) {
+          graphqlQuery = {
+            query: `
+              mutation {
+                updatePost(id: "${this.state.editPost._id}", postInput: {title: "${postData.title}", content: "${
+                postData.content
+              }", imageUrl: "${imageUrl}"}) {
+                  _id
+                  title
+                  content
+                  imageUrl
+                  creator {
+                    name
+                  }
+                  createdAt
+                }
+              }
+            `
+          };
+        }
+
         return fetch('http://localhost:8080/graphql', {
           method: 'POST',
           body: JSON.stringify(graphqlQuery),
@@ -208,14 +230,17 @@ class Feed extends Component {
         if (resData.errors) {
           throw new Error('User login failed!');
         }
-        console.log(resData);
+        let resDataField = 'createPost';
+        if (this.state.editPost) {
+          resDataField = 'updatePost';
+        }
         const post = {
-          _id: resData.data.createPost._id,
-          title: resData.data.createPost.title,
-          content: resData.data.createPost.content,
-          creator: resData.data.createPost.creator,
-          createdAt: resData.data.createPost.createdAt,
-          imagePath: resData.data.createPost.imageUrl
+          _id: resData.data[resDataField]._id,
+          title: resData.data[resDataField].title,
+          content: resData.data[resDataField].content,
+          creator: resData.data[resDataField].creator,
+          createdAt: resData.data[resDataField].createdAt,
+          imagePath: resData.data[resDataField].imageUrl
         };
         this.setState(prevState => {
           let updatedPosts = [...prevState.posts];
